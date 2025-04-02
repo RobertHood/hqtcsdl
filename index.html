@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQL Data Table</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <button onclick="fetchData('nsx')">NSX</button>
+    <button onclick="fetchData('pc')">PC</button>
+    <button onclick="fetchData('sp')">SP</button>
+    <button onclick="fetchData('laptop')">Laptop</button>
+    
+    <table id="dataTable">
+        <thead>
+            <tr id="tableHeader">
+                <!-- Dynamic Table Headers Will Be Inserted Here -->
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        function fetchData(tableName) {
+            fetch(`http://localhost:3000/getData?table=${tableName}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector("#dataTable tbody");
+                    const tableHeader = document.querySelector("#tableHeader");
+
+                    tableBody.innerHTML = "";  // Clear old data
+                    tableHeader.innerHTML = ""; // Clear old headers
+
+                    if (data.length === 0) {
+                        tableBody.innerHTML = "<tr><td colspan='100%'>No data available</td></tr>";
+                        return;
+                    }
+
+                    // Dynamically create table headers
+                    const headers = Object.keys(data[0]);
+                    headers.forEach(header => {
+                        const th = document.createElement("th");
+                        th.textContent = header;
+                        tableHeader.appendChild(th);
+                    });
+
+                    // Populate table with data
+                    data.forEach(row => {
+                        const tr = document.createElement("tr");
+                        headers.forEach(header => {
+                            const td = document.createElement("td");
+                            td.textContent = row[header];
+                            tr.appendChild(td);
+                        });
+                        tableBody.appendChild(tr);
+                    });
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+    </script>
+
+</body>
+</html>
