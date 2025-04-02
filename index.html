@@ -26,6 +26,60 @@
     <button onclick="fetchData('pc')">PC</button>
     <button onclick="fetchData('sp')">SP</button>
     <button onclick="fetchData('laptop')">Laptop</button>
+
+    <!-- Filter inputs for NSX table -->
+    <div id="nsxFilters" style="margin-top: 20px; display: none;">
+        <label for="filterMaNSX">MaNSX:</label>
+        <input type="text" id="filterMaNSX" oninput="fetchData('nsx')">
+        <label for="filterName">TenNSX:</label>
+        <input type="text" id="filterName" oninput="fetchData('nsx')">
+        <label for="filterCountry">DiaChi:</label>
+        <input type="text" id="filterCountry" oninput="fetchData('nsx')">
+        <button onclick="addData()">Add Data</button>
+    </div>
+
+    <!-- Filter inputs for PC table -->
+    <div id="pcFilters" style="margin-top: 20px; display: none;">
+        <label for="filterPCMaSP_P">MaSP_P:</label>
+        <input type="text" id="filterPCMaSP_P" oninput="fetchData('pc')">
+        <label for="filterPCCPU">CPU:</label>
+        <input type="text" id="filterPCCPU" oninput="fetchData('pc')">
+        <label for="filterPCRAM">RAM:</label>
+        <input type="text" id="filterPCRAM" oninput="fetchData('pc')">
+        <label for="filterPCHD">HD:</label>
+        <input type="text" id="filterPCHD" oninput="fetchData('pc')">
+        <label for="filterPCGia">Gia:</label>
+        <input type="text" id="filterPCGia" oninput="fetchData('pc')">
+        <button onclick="addDataPC()">Add Data</button>
+    </div>
+
+    <!-- Filter inputs for Laptop table -->
+    <div id="laptopFilters" style="margin-top: 20px; display: none;">
+        <label for="filterLaptopModel">Model:</label>
+        <input type="text" id="filterLaptopModel" oninput="fetchData('laptop')">
+        <label for="filterLaptopCPU">CPU:</label>
+        <input type="text" id="filterLaptopCPU" oninput="fetchData('laptop')">
+        <label for="filterLaptopRAM">RAM:</label>
+        <input type="text" id="filterLaptopRAM" oninput="fetchData('laptop')">
+        <label for="filterLaptopHD">HD:</label>
+        <input type="text" id="filterLaptopHD" oninput="fetchData('laptop')">
+        <label for="filterLaptopManHinh">ManHinh:</label>
+        <input type="text" id="filterLaptopManHinh" oninput="fetchData('laptop')">
+        <label for="filterLaptopGia">Gia:</label>
+        <input type="text" id="filterLaptopGia" oninput="fetchData('laptop')">
+        <button onclick="addDataLaptop()">Add Data</button>
+    </div>
+
+    <!-- Filter inputs for SP table -->
+    <div id="spFilters" style="margin-top: 20px; display: none;">
+        <label for="filterSPMaNSX">MaNSX:</label>
+        <input type="text" id="filterSPMaNSX" oninput="fetchData('sp')">
+        <label for="filterSPMaSP">MaSP:</label>
+        <input type="text" id="filterSPMaSP" oninput="fetchData('sp')">
+        <label for="filterSPLoai">Loai:</label>
+        <input type="text" id="filterSPLoai" oninput="fetchData('sp')">
+        <button onclick="addDataSP()">Add Data</button>
+    </div>
     
     <table id="dataTable">
         <thead>
@@ -38,7 +92,42 @@
 
     <script>
         function fetchData(tableName) {
-            fetch(`http://localhost:3000/getData?table=${tableName}`)
+            const filters = {};
+            document.getElementById('nsxFilters').style.display = 'none';
+            document.getElementById('pcFilters').style.display = 'none';
+            document.getElementById('laptopFilters').style.display = 'none';
+            document.getElementById('spFilters').style.display = 'none';
+
+            if (tableName === 'nsx') {
+                document.getElementById('nsxFilters').style.display = 'block';
+                filters.MaNSX = document.getElementById('filterMaNSX').value || '';
+                filters.name = document.getElementById('filterName').value || '';
+                filters.country = document.getElementById('filterCountry').value || '';
+            } else if (tableName === 'pc') {
+                document.getElementById('pcFilters').style.display = 'block';
+                filters.MaSP_P = document.getElementById('filterPCMaSP_P').value || '';
+                filters.CPU = document.getElementById('filterPCCPU').value || '';
+                filters.RAM = document.getElementById('filterPCRAM').value || '';
+                filters.HD = document.getElementById('filterPCHD').value || '';
+                filters.Gia = document.getElementById('filterPCGia').value || '';
+            } else if (tableName === 'laptop') {
+                document.getElementById('laptopFilters').style.display = 'block';
+                filters.model = document.getElementById('filterLaptopModel').value || '';
+                filters.cpu = document.getElementById('filterLaptopCPU').value || '';
+                filters.ram = document.getElementById('filterLaptopRAM').value || '';
+                filters.hd = document.getElementById('filterLaptopHD').value || '';
+                filters.manhinh = document.getElementById('filterLaptopManHinh').value || '';
+                filters.gia = document.getElementById('filterLaptopGia').value || '';
+            } else if (tableName === 'sp') {
+                document.getElementById('spFilters').style.display = 'block';
+                filters.MaNSX = document.getElementById('filterSPMaNSX').value || '';
+                filters.MaSP = document.getElementById('filterSPMaSP').value || '';
+                filters.loai = document.getElementById('filterSPLoai').value || '';
+            }
+
+            const queryParams = new URLSearchParams({ table: tableName, ...filters }).toString();
+
+            fetch(`http://localhost:3000/getData?${queryParams}`)
                 .then(response => response.json())
                 .then(data => {
                     const tableBody = document.querySelector("#dataTable tbody");
@@ -60,6 +149,11 @@
                         tableHeader.appendChild(th);
                     });
 
+                    // Add a "Delete" column header
+                    const deleteHeader = document.createElement("th");
+                    deleteHeader.textContent = "Actions";
+                    tableHeader.appendChild(deleteHeader);
+
                     // Populate table with data
                     data.forEach(row => {
                         const tr = document.createElement("tr");
@@ -68,12 +162,201 @@
                             td.textContent = row[header];
                             tr.appendChild(td);
                         });
+
+                        // Add a "Delete" button to each row
+                        const deleteTd = document.createElement("td");
+                        const deleteButton = document.createElement("button");
+                        deleteButton.textContent = "Delete";
+                        deleteButton.onclick = () => deleteRow(tableName, row, tr);
+
+                        // Add an "Update" button to each row
+                        const updateButton = document.createElement("button");
+                        updateButton.textContent = "Update";
+                        updateButton.onclick = () => updateRow(tableName, row);
+
+                        deleteTd.appendChild(deleteButton);
+                        deleteTd.appendChild(updateButton);
+                        tr.appendChild(deleteTd);
+
                         tableBody.appendChild(tr);
                     });
                 })
                 .catch(error => console.error("Error fetching data:", error));
         }
-    </script>
 
+        function deleteRow(tableName, row, tableRowElement) {
+            const idField = Object.keys(row)[0]; // Assume the first field is the primary key
+            const idValue = row[idField];
+
+            fetch(`http://localhost:3000/deleteRow`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ table: tableName, idField, idValue })
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert("Row deleted successfully!");
+                        tableRowElement.remove(); // Remove the row from the table
+                    } else {
+                        alert("Failed to delete row: " + result.error);
+                    }
+                })
+                .catch(error => console.error("Error deleting row:", error));
+        }
+
+        function updateRow(tableName, row) {
+            const updatedData = {};
+            const headers = Object.keys(row);
+
+            headers.forEach(header => {
+                const newValue = prompt(`Update ${header}:`, row[header]);
+                if (newValue !== null) {
+                    updatedData[header] = newValue;
+                }
+            });
+
+            fetch(`http://localhost:3000/updateRow`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ table: tableName, data: updatedData })
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert("Row updated successfully!");
+                        fetchData(tableName); // Refresh the table
+                    } else {
+                        alert("Failed to update row: " + result.error);
+                    }
+                })
+                .catch(error => console.error("Error updating row:", error));
+        }
+
+        function addData() {
+            const MaNSX = document.getElementById('filterMaNSX').value;
+            const TenNSX = document.getElementById('filterName').value;
+            const DiaChi = document.getElementById('filterCountry').value;
+
+            if (!MaNSX || !TenNSX || !DiaChi) {
+                alert("Please fill in all fields before adding data.");
+                return;
+            }
+
+            fetch(`http://localhost:3000/addData`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ table: "nsx", data: { MaNSX, TenNSX, DiaChi } })
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert("Data added successfully!");
+                        fetchData("nsx"); // Refresh the table
+                    } else {
+                        alert("Failed to add data: " + result.error);
+                    }
+                })
+                .catch(error => console.error("Error adding data:", error));
+        }
+
+        function addDataPC() {
+            const MaSP_P = document.getElementById('filterPCMaSP_P').value;
+            const CPU = document.getElementById('filterPCCPU').value;
+            const RAM = document.getElementById('filterPCRAM').value;
+            const HD = document.getElementById('filterPCHD').value;
+            const Gia = document.getElementById('filterPCGia').value;
+
+            if (!MaSP_P || !CPU || !RAM || !HD || !Gia) {
+                alert("Please fill in all fields before adding data.");
+                return;
+            }
+
+            fetch(`http://localhost:3000/addData`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ table: "pc", data: { MaSP_P, CPU, RAM, HD, Gia } })
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert("Data added successfully!");
+                        fetchData("pc"); // Refresh the table
+                    } else {
+                        alert("Failed to add data: " + result.error);
+                    }
+                })
+                .catch(error => console.error("Error adding data:", error));
+        }
+
+        function addDataLaptop() {
+            const model = document.getElementById('filterLaptopModel').value;
+            const cpu = document.getElementById('filterLaptopCPU').value;
+            const ram = document.getElementById('filterLaptopRAM').value;
+            const hd = document.getElementById('filterLaptopHD').value;
+            const manhinh = document.getElementById('filterLaptopManHinh').value;
+            const gia = document.getElementById('filterLaptopGia').value;
+
+            if (!model || !cpu || !ram || !hd || !manhinh || !gia) {
+                alert("Please fill in all fields before adding data.");
+                return;
+            }
+
+            fetch(`http://localhost:3000/addData`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ table: "laptop", data: { model, cpu, ram, hd, manhinh, gia } })
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert("Data added successfully!");
+                        fetchData("laptop"); // Refresh the table
+                    } else {
+                        alert("Failed to add data: " + result.error);
+                    }
+                })
+                .catch(error => console.error("Error adding data:", error));
+        }
+
+        function addDataSP() {
+            const MaNSX = document.getElementById('filterSPMaNSX').value;
+            const MaSP = document.getElementById('filterSPMaSP').value;
+            const loai = document.getElementById('filterSPLoai').value;
+
+            if (!MaNSX || !MaSP || !loai) {
+                alert("Please fill in all fields before adding data.");
+                return;
+            }
+
+            fetch(`http://localhost:3000/addData`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ table: "sp", data: { MaNSX, MaSP, loai } })
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert("Data added successfully!");
+                        fetchData("sp"); // Refresh the table
+                    } else {
+                        alert("Failed to add data: " + result.error);
+                    }
+                })
+                .catch(error => console.error("Error adding data:", error));
+        }
+    </script>
 </body>
 </html>
